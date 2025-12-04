@@ -1,0 +1,835 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SkeptikAI - Intelligent Scam Detection</title>
+    <!-- Tesseract.js for OCR -->
+    <script src='https://cdn.jsdelivr.net/npm/tesseract.js@4/dist/tesseract.min.js'></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 900px;
+            width: 100%;
+            overflow: hidden;
+        }
+
+        .header {
+            text-align: center;
+            padding: 40px 20px 20px;
+            background: linear-gradient(135deg, #5a6a85 0%, #4a5568 100%);
+            color: white;
+        }
+
+        .header h1 {
+            font-size: 3em;
+            margin-bottom: 10px;
+            font-weight: 300;
+            letter-spacing: 2px;
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .warning-banner {
+            background: #d4af37;
+            color: #2d3748;
+            padding: 15px;
+            text-align: center;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .warning-icon {
+            font-size: 1.2em;
+        }
+
+        .content {
+            padding: 40px;
+        }
+
+        .input-section h2 {
+            color: #2d3748;
+            margin-bottom: 20px;
+            font-size: 1.5em;
+            font-weight: 400;
+        }
+
+        /* NEW - Input mode tabs */
+        .input-mode-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #e2e8f0;
+        }
+
+        .tab-btn {
+            padding: 12px 24px;
+            background: none;
+            border: none;
+            border-bottom: 3px solid transparent;
+            cursor: pointer;
+            font-size: 1em;
+            color: #718096;
+            transition: all 0.3s;
+            font-weight: 500;
+        }
+
+        .tab-btn.active {
+            color: #667eea;
+            border-bottom-color: #667eea;
+        }
+
+        .tab-btn:hover {
+            color: #667eea;
+        }
+
+        .input-mode {
+            display: none;
+        }
+
+        .input-mode.active {
+            display: block;
+        }
+
+        textarea {
+            width: 100%;
+            min-height: 150px;
+            padding: 15px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 1em;
+            font-family: inherit;
+            resize: vertical;
+            transition: border-color 0.3s;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        textarea::placeholder {
+            color: #a0aec0;
+            font-style: italic;
+        }
+
+        /* NEW - File upload styles */
+        .file-upload-area {
+            width: 100%;
+            min-height: 200px;
+            border: 3px dashed #cbd5e0;
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 30px;
+            cursor: pointer;
+            transition: all 0.3s;
+            background: #f7fafc;
+        }
+
+        .file-upload-area:hover {
+            border-color: #667eea;
+            background: #edf2f7;
+        }
+
+        .file-upload-area.dragover {
+            border-color: #667eea;
+            background: #e6fffa;
+        }
+
+        .upload-icon {
+            font-size: 3em;
+            color: #a0aec0;
+            margin-bottom: 15px;
+        }
+
+        .upload-text {
+            color: #4a5568;
+            font-size: 1.1em;
+            margin-bottom: 5px;
+        }
+
+        .upload-hint {
+            color: #718096;
+            font-size: 0.9em;
+        }
+
+        .file-input {
+            display: none;
+        }
+
+        .image-preview {
+            margin-top: 20px;
+            display: none;
+        }
+
+        .image-preview.active {
+            display: block;
+        }
+
+        .preview-image {
+            max-width: 100%;
+            max-height: 300px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            margin-bottom: 15px;
+        }
+
+        .preview-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .clear-btn {
+            padding: 10px 20px;
+            background: #fc8181;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9em;
+            transition: all 0.3s;
+        }
+
+        .clear-btn:hover {
+            background: #f56565;
+        }
+
+        .ocr-status {
+            display: none;
+            margin-top: 15px;
+            padding: 15px;
+            background: #bee3f8;
+            border-left: 4px solid #4299e1;
+            border-radius: 6px;
+        }
+
+        .ocr-status.active {
+            display: block;
+        }
+
+        .ocr-status .spinner {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid #e2e8f0;
+            border-top: 2px solid #4299e1;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 10px;
+        }
+
+        .examples {
+            margin: 20px 0;
+        }
+
+        .examples p {
+            color: #4a5568;
+            margin-bottom: 15px;
+            font-size: 0.95em;
+        }
+
+        .example-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .example-btn {
+            padding: 10px 20px;
+            background: white;
+            border: 2px solid #e2e8f0;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 0.9em;
+            color: #4a5568;
+        }
+
+        .example-btn:hover {
+            background: #f7fafc;
+            border-color: #cbd5e0;
+            transform: translateY(-2px);
+        }
+
+        .analyze-btn {
+            width: 100%;
+            padding: 18px;
+            background: linear-gradient(135deg, #5a6a85 0%, #4a5568 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-top: 20px;
+            letter-spacing: 1px;
+        }
+
+        .analyze-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+        }
+
+        .analyze-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .results {
+            margin-top: 30px;
+            padding: 25px;
+            border-radius: 8px;
+            display: none;
+        }
+
+        .results.scam {
+            background: #fed7d7;
+            border: 2px solid #fc8181;
+        }
+
+        .results.safe {
+            background: #c6f6d5;
+            border: 2px solid #68d391;
+        }
+
+        .results h3 {
+            margin-bottom: 15px;
+            font-size: 1.5em;
+        }
+
+        .results.scam h3 {
+            color: #c53030;
+        }
+
+        .results.safe h3 {
+            color: #2f855a;
+        }
+
+        .result-details {
+            line-height: 1.8;
+            color: #2d3748;
+        }
+
+        .result-details p {
+            margin: 10px 0;
+        }
+
+        .result-details strong {
+            color: #1a202c;
+        }
+
+        .threat-badge {
+            display: inline-block;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            font-weight: 600;
+            margin-left: 10px;
+        }
+
+        .threat-critical {
+            background: #fc8181;
+            color: #742a2a;
+        }
+
+        .threat-high {
+            background: #f6ad55;
+            color: #7c2d12;
+        }
+
+        .threat-medium {
+            background: #fbd38d;
+            color: #744210;
+        }
+
+        .threat-low {
+            background: #9ae6b4;
+            color: #22543d;
+        }
+
+        .threat-minimal {
+            background: #c6f6d5;
+            color: #22543d;
+        }
+
+        .red-flags {
+            margin-top: 15px;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.5);
+            border-radius: 6px;
+        }
+
+        .red-flags ul {
+            margin-left: 20px;
+            margin-top: 10px;
+        }
+
+        .red-flags li {
+            margin: 5px 0;
+        }
+
+        .roast-section {
+            margin-top: 20px;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.7);
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+        }
+
+        .roast-section h4 {
+            color: #4a5568;
+            margin-bottom: 10px;
+            font-size: 1.1em;
+        }
+
+        .roast-text {
+            font-style: italic;
+            color: #2d3748;
+            line-height: 1.6;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            margin-top: 20px;
+            color: #667eea;
+            font-size: 1.1em;
+        }
+
+        .spinner {
+            border: 3px solid #f3f4f6;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        .score-bar {
+            width: 100%;
+            height: 12px;
+            background: #e2e8f0;
+            border-radius: 6px;
+            overflow: hidden;
+            margin-top: 10px;
+        }
+
+        .score-fill {
+            height: 100%;
+            transition: width 0.5s ease;
+            background: linear-gradient(90deg, #48bb78 0%, #f6ad55 50%, #fc8181 100%);
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>SkeptikAI</h1>
+            <p>Intelligent Scam Detection & Response</p>
+        </div>
+
+        <div class="warning-banner">
+            <span class="warning-icon">⚠️</span>
+            <span>Demonstration Interface — Production System Operates Privately</span>
+        </div>
+
+        <div class="content">
+            <div class="input-section">
+                <h2>Analyze a suspicious message</h2>
+
+                <!-- NEW - Input mode tabs -->
+                <div class="input-mode-tabs">
+                    <button class="tab-btn active" data-mode="text">📝 Text Input</button>
+                    <button class="tab-btn" data-mode="image">📷 Upload Screenshot</button>
+                </div>
+
+                <!-- Text input mode -->
+                <div class="input-mode active" id="text-mode">
+                    <textarea id="messageInput" placeholder="Paste a suspicious communication here..."></textarea>
+
+                    <div class="examples">
+                        <p>Select an example to analyze:</p>
+                        <div class="example-buttons">
+                            <button class="example-btn" data-type="phishing">Phishing Email</button>
+                            <button class="example-btn" data-type="irs">IRS Scam</button>
+                            <button class="example-btn" data-type="prize">Fake Prize</button>
+                            <button class="example-btn" data-type="romance">Romance Scam</button>
+                            <button class="example-btn" data-type="job">Fake Job</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- NEW - Image upload mode -->
+                <div class="input-mode" id="image-mode">
+                    <div class="file-upload-area" id="uploadArea">
+                        <div class="upload-icon">📸</div>
+                        <div class="upload-text">Click to upload or drag & drop</div>
+                        <div class="upload-hint">Support: JPG, PNG, GIF (Max 10MB)</div>
+                        <input type="file" id="fileInput" class="file-input" accept="image/*">
+                    </div>
+
+                    <div class="image-preview" id="imagePreview">
+                        <img id="previewImage" class="preview-image" alt="Preview">
+                        <div class="preview-actions">
+                            <button class="clear-btn" id="clearImage">🗑️ Remove Image</button>
+                        </div>
+                    </div>
+
+                    <div class="ocr-status" id="ocrStatus">
+                        <span class="spinner"></span>
+                        <span id="ocrStatusText">Extracting text from image...</span>
+                    </div>
+
+                    <div class="examples">
+                        <p>💡 Tip: Upload a screenshot of a suspicious text, email, or message</p>
+                    </div>
+                </div>
+
+                <button class="analyze-btn" id="analyzeBtn">ANALYZE MESSAGE</button>
+
+                <div class="loading" id="loading">
+                    <div class="spinner"></div>
+                    <p id="loadingText">Analyzing message...</p>
+                </div>
+
+                <div class="results" id="results">
+                    <h3 id="resultTitle"></h3>
+                    <div class="result-details">
+                        <p>
+                            <strong>Threat Level:</strong>
+                            <span id="threatLevel"></span>
+                            <span id="threatBadge" class="threat-badge"></span>
+                        </p>
+                        <p><strong>Scam Type:</strong> <span id="scamType"></span></p>
+                        <p><strong>Threat Score:</strong> <span id="threatScore"></span></p>
+                        <div class="score-bar">
+                            <div class="score-fill" id="scoreFill"></div>
+                        </div>
+
+                        <div class="red-flags" id="redFlagsSection" style="display: none;">
+                            <strong>🚩 Red Flags Detected (<span id="flagCount"></span>):</strong>
+                            <ul id="redFlagsList"></ul>
+                        </div>
+
+                        <div class="roast-section" id="roastSection" style="display: none;">
+                            <h4>🔥 SkeptikAI's Response:</h4>
+                            <div class="roast-text" id="roastText"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE_URL = 'http://localhost:5000';
+        let extractedText = '';
+        let currentMode = 'text';
+
+        // Example messages
+        const examples = {
+            phishing: "URGENT: Your bank account has been suspended. Click here to verify your identity immediately or your account will be closed.",
+            irs: "This is the IRS. You owe $5,000 in back taxes. Pay now or face arrest. Call 800-555-1234.",
+            prize: "Congratulations! You've won a $1,000 gift card! Click here to claim your prize now. Limited time offer!",
+            romance: "Hi, I saw your profile and I think you're amazing. I'm currently overseas but would love to meet you. Can you help me with travel expenses?",
+            job: "Work from home and make $5,000/week! No experience needed. Just send $99 for the starter kit."
+        };
+
+        // Tab switching
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const mode = btn.dataset.mode;
+
+                // Update tabs
+                document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+
+                // Update input modes
+                document.querySelectorAll('.input-mode').forEach(m => m.classList.remove('active'));
+                document.getElementById(`${mode}-mode`).classList.add('active');
+
+                currentMode = mode;
+
+                // Reset results when switching
+                document.getElementById('results').style.display = 'none';
+            });
+        });
+
+        // File upload handling
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+        const imagePreview = document.getElementById('imagePreview');
+        const previewImage = document.getElementById('previewImage');
+        const ocrStatus = document.getElementById('ocrStatus');
+        const ocrStatusText = document.getElementById('ocrStatusText');
+
+        uploadArea.addEventListener('click', () => fileInput.click());
+
+        // Drag and drop
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('dragover');
+        });
+
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+
+            const file = e.dataTransfer.files[0];
+            if (file && file.type.startsWith('image/')) {
+                handleImageUpload(file);
+            }
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                handleImageUpload(file);
+            }
+        });
+
+        document.getElementById('clearImage').addEventListener('click', () => {
+            imagePreview.classList.remove('active');
+            uploadArea.style.display = 'flex';
+            fileInput.value = '';
+            extractedText = '';
+            ocrStatus.classList.remove('active');
+        });
+
+        async function handleImageUpload(file) {
+            // Show preview
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                previewImage.src = e.target.result;
+                imagePreview.classList.add('active');
+                uploadArea.style.display = 'none';
+            };
+            reader.readAsDataURL(file);
+
+            // Perform OCR
+            ocrStatus.classList.add('active');
+            ocrStatusText.textContent = 'Extracting text from image...';
+
+            try {
+                const result = await Tesseract.recognize(file, 'eng', {
+                    logger: (m) => {
+                        if (m.status === 'recognizing text') {
+                            const progress = Math.round(m.progress * 100);
+                            ocrStatusText.textContent = `Extracting text... ${progress}%`;
+                        }
+                    }
+                });
+
+                extractedText = result.data.text.trim();
+
+                if (extractedText) {
+                    ocrStatusText.textContent = `✅ Extracted ${extractedText.length} characters - Ready to analyze!`;
+                } else {
+                    ocrStatusText.textContent = '⚠️ No text found in image. Try a clearer screenshot.';
+                }
+
+            } catch (error) {
+                console.error('OCR Error:', error);
+                ocrStatusText.textContent = '❌ Failed to extract text. Please try another image.';
+            }
+        }
+
+        // Load example messages
+        document.querySelectorAll('.example-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const type = btn.dataset.type;
+                document.getElementById('messageInput').value = examples[type];
+
+                // Switch to text mode if not already
+                if (currentMode !== 'text') {
+                    document.querySelector('[data-mode="text"]').click();
+                }
+            });
+        });
+
+        // Analyze message
+        document.getElementById('analyzeBtn').addEventListener('click', async () => {
+            let message = '';
+
+            if (currentMode === 'text') {
+                message = document.getElementById('messageInput').value.trim();
+            } else {
+                message = extractedText;
+            }
+
+            if (!message) {
+                alert('Please enter a message or upload an image with text');
+                return;
+            }
+
+            // Show loading
+            const loadingText = document.getElementById('loadingText');
+            loadingText.textContent = currentMode === 'image' ?
+                'Analyzing extracted text...' : 'Analyzing message...';
+
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('results').style.display = 'none';
+            document.getElementById('analyzeBtn').disabled = true;
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/analyze`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        message: message,
+                        source: currentMode === 'image' ? 'screenshot' : 'web'
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error('Analysis failed');
+                }
+
+                const data = await response.json();
+
+                if (data.success) {
+                    displayResults(data.result);
+                } else {
+                    throw new Error(data.error || 'Unknown error');
+                }
+
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Failed to analyze message. Make sure the API is running on http://localhost:5000\n\nStart it with: python api.py');
+            } finally {
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('analyzeBtn').disabled = false;
+            }
+        });
+
+        function displayResults(result) {
+            const results = document.getElementById('results');
+            const isScam = result.is_scam;
+
+            // Set result class
+            results.className = 'results ' + (isScam ? 'scam' : 'safe');
+            results.style.display = 'block';
+
+            // Set title
+            document.getElementById('resultTitle').textContent = isScam ?
+                '🚨 SCAM DETECTED' : '✅ Message Appears Safe';
+
+            // Set threat level
+            const threatLevel = result.threat_level.toUpperCase();
+            document.getElementById('threatLevel').textContent = threatLevel;
+
+            const badge = document.getElementById('threatBadge');
+            badge.textContent = threatLevel;
+            badge.className = 'threat-badge threat-' + result.threat_level;
+
+            // Set scam type
+            document.getElementById('scamType').textContent =
+                result.scam_type ? result.scam_type.replace(/_/g, ' ').toUpperCase() : 'UNKNOWN';
+
+            // Set threat score
+            const scoreText = `${result.weighted_score.toFixed(1)}/10 (${result.percentage}%)`;
+            document.getElementById('threatScore').textContent = scoreText;
+
+            // Update score bar
+            const scoreFill = document.getElementById('scoreFill');
+            const percentage = Math.min(result.percentage, 100);
+            scoreFill.style.width = percentage + '%';
+
+            // Set red flags
+            if (result.red_flags && result.red_flags.length > 0) {
+                document.getElementById('redFlagsSection').style.display = 'block';
+                document.getElementById('flagCount').textContent = result.red_flags.length;
+
+                const flagsList = document.getElementById('redFlagsList');
+                flagsList.innerHTML = '';
+                result.red_flags.forEach(flag => {
+                    const li = document.createElement('li');
+                    li.textContent = flag;
+                    flagsList.appendChild(li);
+                });
+            } else {
+                document.getElementById('redFlagsSection').style.display = 'none';
+            }
+
+            // Set roast response
+            if (result.roast_response) {
+                document.getElementById('roastSection').style.display = 'block';
+                document.getElementById('roastText').textContent = result.roast_response;
+            } else {
+                document.getElementById('roastSection').style.display = 'none';
+            }
+
+            // Scroll to results
+            results.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+
+        // Allow Enter to submit (with Shift+Enter for new line)
+        document.getElementById('messageInput').addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                document.getElementById('analyzeBtn').click();
+            }
+        });
+
+        // Check API status on load
+        window.addEventListener('load', async () => {
+            try {
+                const response = await fetch(`${API_BASE_URL}/status`);
+                if (response.ok) {
+                    console.log('✅ Connected to SkeptikAI API');
+                }
+            } catch (error) {
+                console.warn('⚠️ API not running. Start it with: python api.py');
+            }
+        });
+    </script>
+</body>
+
+</html>
