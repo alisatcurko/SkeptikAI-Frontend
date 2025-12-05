@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Account - SkeptikAI</title>
+    <script src="https://js.stripe.com/v3/"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;800&family=Inter:wght@300;400;600;700&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            min-height: 100vh;
+            background: #f8fafc;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 30px 40px;
+            color: white;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+
+        .header-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1.8em;
+            font-weight: 800;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .btn-secondary {
+            padding: 10px 20px;
+            background: rgba(255,255,255,0.2);
+            border: 2px solid white;
+            color: white;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.3s;
+        }
+
+        .btn-secondary:hover {
+            background: white;
+            color: #667eea;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 40px auto;
+            padding: 0 20px;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 30px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 16px;
+            padding: 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+
+        .card h2 {
+            font-size: 1.5em;
+            margin-bottom: 20px;
+            color: #1e293b;
+        }
+
+        .user-info {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 15px 0;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .info-label {
+            color: #64748b;
+            font-weight: 500;
+        }
+
+        .info-value {
+            color: #1e293b;
+            font-weight: 600;
+        }
+
+        .plan-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .plan-badge.free {
+            background: #e0e7ff;
+            color: #4338ca;
+        }
+
+        .plan-badge.pro {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .usage-stats {
+            margin-top: 20px;
+        }
+
+        .usage-item {
+            margin-bottom: 15px;
+        }
+
+        .usage-label {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 0.9em;
+        }
+
+        .usage-bar {
+            height: 8px;
+            background: #e2e8f0;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .usage-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            transition: width 0.3s ease;
+        }
+
+        .plan-card {
+            border: 3px solid transparent;
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .plan-card.current {
+            border-color: #667eea;
+            background: linear-gradient(to bottom, #f8faff 0%, white 100%);
+        }
+
+        .plan-card.current::before {
+            content: 'CURRENT PLAN';
+            position: absolute;
+            top: 15px;
+            right: -30px;
+            background: #667eea;
+            color: white;
+            padding: 5px 40px;
+            font-size: 0.7em;
+            font-weight: 700;
+            transform: rotate(45deg);
+        }
+
+        .plan-header {
+            text-align: center;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #e2e8f0;
+        }
+
+        .plan-name {
+            font-size: 1.8em;
+            font-weight: 700;
+            color: #1e293b;
+            margin-bottom: 10px;
+        }
+
+        .plan-price {
+            font-size: 3em;
+            font-weight: 800;
+            color: #667eea;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .plan-price span {
+            font-size: 0.4em;
+            color: #64748b;
+        }
+
+        .plan-features {
+            list-style: none;
+            padding: 25px 0;
+        }
+
+        .plan-features li {
+            padding: 12px 0;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            color: #334155;
+        }
+
+        .plan-features li::before {
+            content: '✓';
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 24px;
+            height: 24px;
+            background: #d1fae5;
+            color: #065f46;
+            border-radius: 50%;
+            font-weight: 700;
+            flex-shrink: 0;
+        }
+
+        .btn-primary {
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.05em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-outline {
+            width: 100%;
+            padding: 16px;
+            background: white;
+            color: #667eea;
+            border: 2px solid #667eea;
+            border-radius: 10px;
+            font-size: 1.05em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-outline:hover {
+            background: #667eea;
+            color: white;
+        }
+
+        .alert {
+            padding: 15px 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            font-weight: 500;
+        }
+
+        .alert-success {
+            background: #d1fae5;
+            color: #065f46;
+            border: 1px solid #a7f3d0;
+        }
+
+        .alert-error {
+            background: #fee2e2;
+            color: #991b1b;
+            border: 1px solid #fecaca;
+        }
+
+        @media (max-width: 768px) {
+            .grid {
+                grid-template-columns: 1fr;
+            }
+
+            .header-content {
+                flex-direction: column;
+                gap: 20px;
+                text-align: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="header-content">
+            <div class="logo">SkeptikAI</div>
+            <div class="header-actions">
+                <a href="index.html" class="btn-secondary">← Back to App</a>
+                <button class="btn-secondary" id="signoutBtn">Sign Out</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <div id="alert"></div>
+
+        <div class="grid">
+            <!-- User Info Card -->
+            <div class="card">
+                <h2>Account Details</h2>
+                <div class="user-info">
+                    <div class="info-row">
+                        <span class="info-label">Email</span>
+                        <span class="info-value" id="userEmail">Loading...</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Plan</span>
+                        <span class="info-value">
+                            <span class="plan-badge free" id="currentPlan">Free</span>
+                        </span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Member Since</span>
+                        <span class="info-value" id="memberSince">Loading...</span>
+                    </div>
+                </div>
+
+                <div class="usage-stats">
+                    <h3 style="margin-bottom: 15px; color: #1e293b;">Today's Usage</h3>
+                    <div class="usage-item">
+                        <div class="usage-label">
+                            <span>Analyses</span>
+                            <span id="usageText">0/10</span>
+                        </div>
+                        <div class="usage-bar">
+                            <div class="usage-fill" id="usageFill" style="width: 0%"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Plans Card -->
+            <div class="card">
+                <h2>Subscription Plans</h2>
+                <div class="grid" style="grid-template-columns: 1fr 1fr; gap: 20px;">
+                    <!-- Free Plan -->
+                    <div class="plan-card current" id="freePlanCard">
+                        <div class="plan-header">
+                            <div class="plan-name">Free</div>
+                            <div class="plan-price">$0<span>/mo</span></div>
+                        </div>
+                        <ul class="plan-features">
+                            <li>10 analyses per day</li>
+                            <li>Text input only</li>
+                            <li>Basic scam detection</li>
+                            <li>Community support</li>
+                        </ul>
+                        <button class="btn-outline" disabled>Current Plan</button>
+                    </div>
+
+                    <!-- Pro Plan -->
+                    <div class="plan-card" id="proPlanCard">
+                        <div class="plan-header">
+                            <div class="plan-name">Pro</div>
+                            <div class="plan-price">$15<span>/mo</span></div>
+                        </div>
+                        <ul class="plan-features">
+                            <li>Unlimited analyses</li>
+                            <li>Screenshot upload (OCR)</li>
+                            <li>Priority processing</li>
+                            <li>Priority support</li>
+                            <li>Early access features</li>
+                            <li>Audio analysis (2026)</li>
+                        </ul>
+                        <button class="btn-primary" id="upgradeBtn">Upgrade to Pro</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+        import { getAuth, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+        import { getFirestore, doc, getDoc, setDoc } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+
+        // Firebase Config
+        const firebaseConfig = {
+            apiKey: "AIzaSyC2ZjJzIIhxOC7dNU1KAkQdoModi3sY3Kc",
+            authDomain: "skeptikai.firebaseapp.com",
+            projectId: "skeptikai",
+            storageBucket: "skeptikai.firebasestorage.app",
+            messagingSenderId: "599393940170",
+            appId: "1:599393940170:web:7da1a610108d7fd342fa33"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        // Stripe
+        const STRIPE_PUBLISHABLE_KEY = 'pk_test_YOUR_KEY_HERE'; // Replace with your key
+        const stripe = Stripe(STRIPE_PUBLISHABLE_KEY);
+
+        let currentUser = null;
+        let userData = null;
+
+        // Auth State
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                currentUser = user;
+                await loadUserData();
+                updateUI();
+            } else {
+                window.location.href = 'login.html';
+            }
+        });
+
+        // Load User Data
+        async function loadUserData() {
+            const userRef = doc(db, 'users', currentUser.uid);
+            const userSnap = await getDoc(userRef);
+
+            if (userSnap.exists()) {
+                userData = userSnap.data();
+            } else {
+                // Create new user document
+                userData = {
+                    email: currentUser.email,
+                    plan: 'free',
+                    createdAt: new Date().toISOString(),
+                    dailyUsage: 0,
+                    usageDate: new Date().toDateString()
+                };
+                await setDoc(userRef, userData);
+            }
+
+            // Reset daily usage if new day
+            const today = new Date().toDateString();
+            if (userData.usageDate !== today) {
+                userData.dailyUsage = 0;
+                userData.usageDate = today;
+                await setDoc(userRef, userData, { merge: true });
+            }
+        }
+
+        // Update UI
+        function updateUI() {
+            document.getElementById('userEmail').textContent = currentUser.email;
+            
+            const createdDate = new Date(currentUser.metadata.creationTime);
+            document.getElementById('memberSince').textContent = createdDate.toLocaleDateString();
+
+            const isPro = userData.plan === 'pro';
+            const currentPlanBadge = document.getElementById('currentPlan');
+            currentPlanBadge.textContent = isPro ? 'Pro' : 'Free';
+            currentPlanBadge.className = `plan-badge ${isPro ? 'pro' : 'free'}`;
+
+            // Update plan cards
+            document.getElementById('freePlanCard').classList.toggle('current', !isPro);
+            document.getElementById('proPlanCard').classList.toggle('current', isPro);
+
+            const upgradeBtn = document.getElementById('upgradeBtn');
+            if (isPro) {
+                upgradeBtn.textContent = 'Current Plan';
+                upgradeBtn.disabled = true;
+                upgradeBtn.className = 'btn-outline';
+            }
+
+            // Update usage
+            const limit = isPro ? -1 : 10;
+            const usage = userData.dailyUsage || 0;
+            
+            if (limit === -1) {
+                document.getElementById('usageText').textContent = `${usage} (Unlimited)`;
+                document.getElementById('usageFill').style.width = '100%';
+            } else {
+                document.getElementById('usageText').textContent = `${usage}/${limit}`;
+                const percentage = (usage / limit) * 100;
+                document.getElementById('usageFill').style.width = `${percentage}%`;
+            }
+        }
+
+        // Sign Out
+        document.getElementById('signoutBtn').addEventListener('click', async () => {
+            try {
+                await signOut(auth);
+                window.location.href = 'index.html';
+            } catch (error) {
+                showAlert('Error signing out', 'error');
+            }
+        });
+
+        // Upgrade to Pro
+        document.getElementById('upgradeBtn').addEventListener('click', async () => {
+            if (userData.plan === 'pro') return;
+
+            try {
+                // TODO: Implement Stripe Checkout
+                // For now, just update the plan
+                showAlert('Stripe integration coming soon! For now, enjoy Pro features!', 'success');
+                
+                userData.plan = 'pro';
+                const userRef = doc(db, 'users', currentUser.uid);
+                await setDoc(userRef, { plan: 'pro' }, { merge: true });
+                
+                updateUI();
+            } catch (error) {
+                showAlert('Error upgrading. Please try again.', 'error');
+            }
+        });
+
+        function showAlert(message, type) {
+            const alertDiv = document.getElementById('alert');
+            alertDiv.className = `alert alert-${type}`;
+            alertDiv.textContent = message;
+            alertDiv.style.display = 'block';
+            
+            setTimeout(() => {
+                alertDiv.style.display = 'none';
+            }, 5000);
+        }
+    </script>
+</body>
+</html>

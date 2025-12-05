@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SkeptikAI - Sign In</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;800&family=Inter:wght@300;400;600&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            position: relative;
+            overflow: hidden;
+        }
+
+        body::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: 
+                radial-gradient(circle at 20% 50%, rgba(255,255,255,0.1) 0%, transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(255,255,255,0.05) 0%, transparent 50%);
+            animation: drift 20s ease-in-out infinite;
+        }
+
+        @keyframes drift {
+            0%, 100% { transform: translate(0, 0); }
+            50% { transform: translate(-20px, -20px); }
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.98);
+            border-radius: 24px;
+            box-shadow: 0 30px 80px rgba(0, 0, 0, 0.3);
+            max-width: 450px;
+            width: 90%;
+            padding: 50px 40px;
+            position: relative;
+            z-index: 1;
+            backdrop-filter: blur(10px);
+        }
+
+        .logo {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .logo h1 {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 2.5em;
+            font-weight: 800;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 10px;
+        }
+
+        .logo p {
+            color: #64748b;
+            font-size: 0.95em;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+            background: #f1f5f9;
+            padding: 5px;
+            border-radius: 12px;
+        }
+
+        .tab {
+            flex: 1;
+            padding: 12px;
+            text-align: center;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+            color: #64748b;
+        }
+
+        .tab.active {
+            background: white;
+            color: #667eea;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .form-section {
+            display: none;
+        }
+
+        .form-section.active {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #334155;
+            font-weight: 500;
+            font-size: 0.9em;
+        }
+
+        input {
+            width: 100%;
+            padding: 14px 16px;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            font-size: 1em;
+            font-family: inherit;
+            transition: all 0.3s;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .btn {
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.05em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-top: 10px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .error {
+            background: #fee2e2;
+            border: 1px solid #fecaca;
+            color: #991b1b;
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 0.9em;
+            display: none;
+        }
+
+        .error.show {
+            display: block;
+            animation: shake 0.3s ease;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+
+        .success {
+            background: #d1fae5;
+            border: 1px solid #a7f3d0;
+            color: #065f46;
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 0.9em;
+            display: none;
+        }
+
+        .success.show {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .divider {
+            text-align: center;
+            margin: 25px 0;
+            color: #94a3b8;
+            font-size: 0.85em;
+            position: relative;
+        }
+
+        .divider::before,
+        .divider::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            width: 40%;
+            height: 1px;
+            background: #e2e8f0;
+        }
+
+        .divider::before { left: 0; }
+        .divider::after { right: 0; }
+
+        .link {
+            text-align: center;
+            margin-top: 20px;
+            color: #64748b;
+            font-size: 0.9em;
+        }
+
+        .link a {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .link a:hover {
+            text-decoration: underline;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .spinner {
+            border: 3px solid #f3f4f6;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="logo">
+            <h1>SkeptikAI</h1>
+            <p>Intelligent Scam Detection</p>
+        </div>
+
+        <div class="tabs">
+            <div class="tab active" data-tab="signin">Sign In</div>
+            <div class="tab" data-tab="signup">Sign Up</div>
+        </div>
+
+        <div class="error" id="error"></div>
+        <div class="success" id="success"></div>
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p>Processing...</p>
+        </div>
+
+        <!-- Sign In Form -->
+        <div class="form-section active" id="signin">
+            <form id="signinForm">
+                <div class="form-group">
+                    <label for="signinEmail">Email</label>
+                    <input type="email" id="signinEmail" required placeholder="you@example.com">
+                </div>
+                <div class="form-group">
+                    <label for="signinPassword">Password</label>
+                    <input type="password" id="signinPassword" required placeholder="••••••••">
+                </div>
+                <button type="submit" class="btn">Sign In</button>
+            </form>
+            <div class="link">
+                <a href="index.html">← Back to Home</a>
+            </div>
+        </div>
+
+        <!-- Sign Up Form -->
+        <div class="form-section" id="signup">
+            <form id="signupForm">
+                <div class="form-group">
+                    <label for="signupEmail">Email</label>
+                    <input type="email" id="signupEmail" required placeholder="you@example.com">
+                </div>
+                <div class="form-group">
+                    <label for="signupPassword">Password</label>
+                    <input type="password" id="signupPassword" required placeholder="At least 6 characters">
+                </div>
+                <div class="form-group">
+                    <label for="signupPasswordConfirm">Confirm Password</label>
+                    <input type="password" id="signupPasswordConfirm" required placeholder="Confirm password">
+                </div>
+                <button type="submit" class="btn">Create Account</button>
+            </form>
+            <div class="link">
+                <a href="index.html">← Back to Home</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+
+        // Firebase Config
+        const firebaseConfig = {
+            apiKey: "AIzaSyC2ZjJzIIhxOC7dNU1KAkQdoModi3sY3Kc",
+            authDomain: "skeptikai.firebaseapp.com",
+            projectId: "skeptikai",
+            storageBucket: "skeptikai.firebasestorage.app",
+            messagingSenderId: "599393940170",
+            appId: "1:599393940170:web:7da1a610108d7fd342fa33"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+
+        // UI Elements
+        const tabs = document.querySelectorAll('.tab');
+        const signinForm = document.getElementById('signinForm');
+        const signupForm = document.getElementById('signupForm');
+        const errorDiv = document.getElementById('error');
+        const successDiv = document.getElementById('success');
+        const loadingDiv = document.getElementById('loading');
+
+        // Tab switching
+        tabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                const targetTab = tab.dataset.tab;
+                
+                tabs.forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                
+                document.querySelectorAll('.form-section').forEach(section => {
+                    section.classList.remove('active');
+                });
+                document.getElementById(targetTab).classList.add('active');
+                
+                hideMessages();
+            });
+        });
+
+        // Sign In
+        signinForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const email = document.getElementById('signinEmail').value;
+            const password = document.getElementById('signinPassword').value;
+            
+            showLoading();
+            hideMessages();
+            
+            try {
+                const userCredential = await signInWithEmailAndPassword(auth, email, password);
+                showSuccess('Signed in successfully! Redirecting...');
+                setTimeout(() => {
+                    window.location.href = 'account.html';
+                }, 1500);
+            } catch (error) {
+                hideLoading();
+                showError(getErrorMessage(error.code));
+            }
+        });
+
+        // Sign Up
+        signupForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const email = document.getElementById('signupEmail').value;
+            const password = document.getElementById('signupPassword').value;
+            const passwordConfirm = document.getElementById('signupPasswordConfirm').value;
+            
+            hideMessages();
+            
+            if (password !== passwordConfirm) {
+                showError('Passwords do not match!');
+                return;
+            }
+            
+            if (password.length < 6) {
+                showError('Password must be at least 6 characters!');
+                return;
+            }
+            
+            showLoading();
+            
+            try {
+                const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+                showSuccess('Account created! Redirecting...');
+                setTimeout(() => {
+                    window.location.href = 'account.html';
+                }, 1500);
+            } catch (error) {
+                hideLoading();
+                showError(getErrorMessage(error.code));
+            }
+        });
+
+        // Helper Functions
+        function showError(message) {
+            errorDiv.textContent = message;
+            errorDiv.classList.add('show');
+        }
+
+        function showSuccess(message) {
+            successDiv.textContent = message;
+            successDiv.classList.add('show');
+        }
+
+        function hideMessages() {
+            errorDiv.classList.remove('show');
+            successDiv.classList.remove('show');
+        }
+
+        function showLoading() {
+            loadingDiv.style.display = 'block';
+            document.querySelectorAll('.form-section').forEach(s => s.style.display = 'none');
+        }
+
+        function hideLoading() {
+            loadingDiv.style.display = 'none';
+            document.querySelectorAll('.form-section').forEach(s => {
+                if (s.classList.contains('active')) {
+                    s.style.display = 'block';
+                }
+            });
+        }
+
+        function getErrorMessage(code) {
+            switch (code) {
+                case 'auth/email-already-in-use':
+                    return 'This email is already registered!';
+                case 'auth/invalid-email':
+                    return 'Invalid email address!';
+                case 'auth/weak-password':
+                    return 'Password is too weak!';
+                case 'auth/user-not-found':
+                    return 'No account found with this email!';
+                case 'auth/wrong-password':
+                    return 'Incorrect password!';
+                case 'auth/too-many-requests':
+                    return 'Too many attempts. Please try again later.';
+                default:
+                    return 'An error occurred. Please try again.';
+            }
+        }
+    </script>
+</body>
+</html>
